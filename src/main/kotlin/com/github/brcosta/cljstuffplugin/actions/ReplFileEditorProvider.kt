@@ -27,7 +27,9 @@ import javax.swing.JComponent
 class ReplFileEditorProvider : FileEditorProvider, DumbAware {
 
     override fun accept(project: Project, file: VirtualFile): Boolean {
-        val stateAtom = cursive.repl.activeReplState(project)?.deref() as ILookup? ?: return false
+        val stateAtom = cursive.repl.focusedReplState(project)
+            ?.let { if (cursive.repl.isActive(it)) it else null }
+            ?.deref() as ILookup? ?: return false
         val outputBuffer =
             (stateAtom.valAt(Keyword.intern("console"))) as ClojureConsole? ?: return false
         return (file == outputBuffer.clojureVirtualFile)
@@ -52,7 +54,8 @@ class ReplFileEditorProvider : FileEditorProvider, DumbAware {
 
         constructor(proj: Project) : this() {
             this.proj = proj
-            val stateAtom = cursive.repl.activeReplState(proj)?.deref() as ILookup?
+            val stateAtom = cursive.repl.focusedReplState(proj)
+                ?.let { if (cursive.repl.isActive(it)) it else null }?.deref() as ILookup?
 
             val buffer =
                 (stateAtom?.valAt(Keyword.intern("output-buffer"))) as StyledPrinter
@@ -111,7 +114,10 @@ class ReplFileEditorProvider : FileEditorProvider, DumbAware {
         }
 
         override fun getFile(): VirtualFile? {
-            val stateAtom = proj?.let { cursive.repl.activeReplState(it)?.deref() } as ILookup?
+            val stateAtom = proj?.let { it ->
+                cursive.repl.focusedReplState(it)
+                    ?.let { itt -> if (cursive.repl.isActive(itt)) itt else null }?.deref()
+            } as ILookup?
             return ((stateAtom?.valAt(Keyword.intern("console"))) as ClojureConsole?)?.clojureVirtualFile
         }
 

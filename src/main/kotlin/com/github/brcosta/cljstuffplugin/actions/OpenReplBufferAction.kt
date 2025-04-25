@@ -16,7 +16,8 @@ open class OpenReplBufferAction : AnAction() {
         if (event.project != null) {
 
             val project = event.project!!
-            val stateAtom = cursive.repl.activeReplState(event.project!!)?.deref() as ILookup?
+            val stateAtom = cursive.repl.focusedReplState(project)
+                ?.let { if (cursive.repl.isActive(it)) it else null }?.deref() as ILookup?
 
             val outputBuffer = (stateAtom?.valAt(Keyword.intern("console"))) as ClojureConsole?
 

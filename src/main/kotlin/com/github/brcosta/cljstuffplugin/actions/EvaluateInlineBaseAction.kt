@@ -84,7 +84,10 @@ open class EvaluateInlineBaseAction(private val formFn: IFn) : AnAction() {
         val prettyPrint = settings.prettyPrint
         val redirectStdout = settings.redirectStdoutToRepl
 
-        val stateAtom = editor.project?.let { cursive.repl.activeReplState(it)?.deref() } as ILookup? ?: return "(x) Repl is not connected"
+        val stateAtom = editor.project?.let {
+            cursive.repl.focusedReplState(it)
+                ?.let { itt -> if (cursive.repl.isActive(itt)) itt else null }?.deref()
+        } as ILookup? ?: return "(x) Repl is not connected"
 
         val replState = (stateAtom.valAt(Keyword.intern("repl-state")) as Atom?)?.deref() as ILookup?
         val host = replState?.valAt(Keyword.intern("host")) as String?
@@ -168,7 +171,10 @@ open class EvaluateInlineBaseAction(private val formFn: IFn) : AnAction() {
         result: Map<String, Any?>,
     ) {
         try {
-            ansiOutput(cursive.repl.activeReplState(editor.project!!)!!, result["out"] as String)
+            ansiOutput(
+                cursive.repl.focusedReplState(editor.project!!)
+                ?.let { if (cursive.repl.isActive(it)) it else null }!!, result["out"] as String
+            )
         } catch (e: Exception) {
             val outputBuffer =
                 (stateAtom.valAt(Keyword.intern("output-buffer"))) as StyledPrinter
